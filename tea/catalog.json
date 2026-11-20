@@ -1,0 +1,7 @@
+[
+  {"id":"milk","name":"開心奶茶","price":70},
+  {"id":"black","name":"快樂紅茶","price":55},
+  {"id":"oolong","name":"烏龍綠茶","price":60},
+  {"id":"jasmine","name":"茉莉花茶","price":70},
+  {"id":"cane","name":"甘蔗青茶","price":65}
+]

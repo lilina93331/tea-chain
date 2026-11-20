@@ -1,0 +1,8 @@
+[
+  {"id":"taoyuan-1","name":"桃園一店","port":8101},
+  {"id":"taoyuan-2","name":"桃園二店","port":8102},
+  {"id":"taoyuan-3","name":"桃園三店","port":8103},
+  {"id":"taipei","name":"台北店","port":8104},
+  {"id":"taichung","name":"台中店","port":8105},
+  {"id":"tainan","name":"台南店","port":8106}
+]

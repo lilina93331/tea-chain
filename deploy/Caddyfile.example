@@ -1,0 +1,27 @@
+# Replace tea.example.com with a domain you control. Run Caddy on the Ubuntu host.
+(store) {
+    respond /internal/* 404
+    reverse_proxy 127.0.0.1:{args[0]}
+}
+
+hq.tea.example.com {
+    import store 8100
+}
+taoyuan-1.tea.example.com {
+    import store 8101
+}
+taoyuan-2.tea.example.com {
+    import store 8102
+}
+taoyuan-3.tea.example.com {
+    import store 8103
+}
+taipei.tea.example.com {
+    import store 8104
+}
+taichung.tea.example.com {
+    import store 8105
+}
+tainan.tea.example.com {
+    import store 8106
+}

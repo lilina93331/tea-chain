@@ -1,0 +1,34 @@
+name: Verify Ubuntu deployment
+on: [push, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify branch isolation, retry handling and partial reports
+        run: python3 -m unittest discover -s tests -v
+      - name: Build and start all seven services
+        run: |
+          python3 manage.py init
+          docker compose config --quiet
+          docker compose build hq
+          docker compose up -d --wait --wait-timeout 120
+          python3 tests/check_stack.py
+      - name: Verify checkout and reports in Chrome
+        env:
+          TEA_TEST_DISPOSABLE: '1'
+        run: |
+          python3 -m venv /tmp/tea-browser
+          /tmp/tea-browser/bin/pip install playwright
+          /tmp/tea-browser/bin/python tests/browser_checkout.py
+      - name: Verify data after container recreation
+        run: |
+          docker compose up -d --force-recreate --wait taipei
+          python3 tests/check_stack.py
+          docker compose exec -T taipei python -c "import sqlite3; db=sqlite3.connect('/data/sales.sqlite'); assert db.execute('select sum(total) from sales').fetchone()[0] == 220"
+      - name: Show container state on failure
+        if: failure()
+        run: docker compose ps -a && docker compose logs --tail 30

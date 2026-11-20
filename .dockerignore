@@ -1,0 +1,7 @@
+.git
+.tea
+compose.yaml
+**/__pycache__
+.venv
+*.sqlite*
+.env
