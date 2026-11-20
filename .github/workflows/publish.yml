@@ -1,0 +1,43 @@
+name: Publish Docker Hub image
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dockerhub-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Docker Hub configuration
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          test -n "$DOCKERHUB_USERNAME" || { echo "Set repository variable DOCKERHUB_USERNAME"; exit 1; }
+          test -n "$DOCKERHUB_TOKEN" || { echo "Set repository secret DOCKERHUB_TOKEN"; exit 1; }
+      - name: Build and verify image
+        run: |
+          python3 -m unittest discover -s tests -v
+          python3 manage.py init
+          docker compose build hq
+          docker compose up -d --wait --wait-timeout 120
+          python3 tests/check_stack.py
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push verified image
+        run: |
+          image="$DOCKERHUB_USERNAME/tea-chain"
+          docker tag tea-chain-service:local "$image:sha-$GITHUB_SHA"
+          docker tag tea-chain-service:local "$image:latest"
+          docker push "$image:sha-$GITHUB_SHA"
+          docker push "$image:latest"
+          echo "Published $image:latest and $image:sha-$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
