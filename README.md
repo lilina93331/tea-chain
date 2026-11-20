@@ -175,3 +175,26 @@ sudo docker compose cp taipei:/tmp/taipei-backup.sqlite .tea/backup/taipei.sqlit
 - **想用 VS Code 修改程式**　在專案目錄執行 `code .`。安裝 Python 3.10 以上即可用 `python3 manage.py init`、`python3 manage.py dev` 在本機啟動七個開發程序，按 Ctrl+C 結束。此模式使用 `.tea/data/` 的獨立測試資料，與 Compose 二擇一啟動以免連接埠衝突。Ubuntu 容器部署使用 [Waitress WSGI 伺服器](https://docs.pylonsproject.org/projects/waitress/en/latest/runner.html)。
 
 `tea/app.py` 處理權限與跨店報表，`tea/ledger.py` 處理本店資料與交易，`tea/web/` 是門市與總部的介面。可在 GitHub 的 Actions 分頁查看 Ubuntu 建置、瀏覽器收銀與容器重建驗證的執行結果。
+
+## 發布到 Docker Hub
+
+映像儲存庫使用 `lilina31/tea-chain`。六間門市及總部共用同一個映像，由部署環境設定決定角色。
+
+1. 在 Docker Hub 的 `lilina31` 帳號建立公開的 `tea-chain` repository。
+2. 在 Docker 帳號設定建立 Personal Access Token，授予 Read & Write 權限。
+3. 在本 GitHub 儲存庫的 Settings → Secrets and variables → Actions → New repository secret 建立 `DOCKERHUB_TOKEN`，將權杖貼到 Secret 欄位。
+4. 開啟 Actions → Publish Docker Hub image → Run workflow，選擇 `main`。流程會建置映像並驗證門市連線，成功後推送 `latest` 和 `sha-完整提交編號` 兩種標籤。此次映像支援 Linux amd64。
+
+權杖由 GitHub Secret 提供給登入步驟。映像只包含應用程式與套件，門市密碼及資料庫於部署時建立。
+
+部署已發布的映像時，在完成 Docker 安裝及下載本專案後，執行下列指令，可取代前面的本機建置步驟。
+
+~~~bash
+python3 manage.py init
+sudo docker pull lilina31/tea-chain:latest
+sudo docker tag lilina31/tea-chain:latest tea-chain-service:local
+sudo docker compose up -d --no-build --wait --wait-timeout 120
+python3 tests/check_stack.py
+~~~
+
+[Docker Hub 映像頁面](https://hub.docker.com/r/lilina31/tea-chain) · [手動發布流程](https://github.com/lilina93331/tea-chain/actions/workflows/publish.yml)
